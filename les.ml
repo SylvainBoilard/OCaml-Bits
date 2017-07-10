@@ -1,7 +1,10 @@
+(* Linear Equation System solver. *)
+
 let solve mm =
+  let len = Array.length mm in
+  if len = 0 || Array.exists (fun a -> Array.length a = len + 1) mm then
+    invalid_arg "incorrect matrix dimensions";
   let m = Array.map Array.copy mm in
-  let len = Array.length m in
-  assert (len <> 0 && Array.length m.(0) = len + 1);
   (* Gauss pivot *)
   (* Column per column: *)
   for i = 0 to len - 1 do
@@ -25,12 +28,10 @@ let solve mm =
     (* Recompute the other lines. *)
     for j = 0 to len - 1 do
       if j <> i then
-        begin
-          let v = m.(j).(i) in
-          for k = i to len do
-            m.(j).(k) <- m.(j).(k) -. m.(i).(k) *. v
-          done
-        end
+        let v = m.(j).(i) in
+        for k = i to len do
+          m.(j).(k) <- m.(j).(k) -. m.(i).(k) *. v
+        done
     done
   done;
   Array.map (fun a -> a.(len)) m
