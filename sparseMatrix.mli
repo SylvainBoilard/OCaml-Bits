@@ -6,7 +6,7 @@ val set : 'a t -> int * int -> 'a -> unit
 val iter : ('a -> unit) -> 'a t -> unit
 val iteri : (int * int -> 'a -> unit) -> 'a t -> unit
 
-type 'a finger =
+type 'a finger
 
 val finger : 'a t -> int * int -> 'a finger
 val get_finger : 'a finger -> 'a
