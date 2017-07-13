@@ -1,4 +1,5 @@
 type 'a t = { values: 'a array; counts: int array; indexes: int array }
+type 'a finger = { matrix: 'a t; index: int; row: int }
 
 let of_list indexed_elements =
   let rev_sorted =
@@ -56,10 +57,18 @@ let iteri f matrix =
       f (matrix.indexes.(i), !row) v
     ) matrix.values
 
-type 'a finger = { matrix: 'a t; index: int; row: int }
+let iterf f matrix =
+  let row = ref 0 in
+  Array.iteri (fun index v ->
+      while matrix.counts.(succ !row) = i do incr row done;
+      f { matrix; index; row = !row) v
+    ) matrix.values
 
 let finger matrix ((_, row) as coords) =
   { matrix; index = flatten_coords matrix coords; row }
+
+let coords finger =
+  finger.matrix.indexes.(finger.index), finger.row
 
 let get_finger finger =
   finger.matrix.values.(finger.index)
