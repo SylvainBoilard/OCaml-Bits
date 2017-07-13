@@ -46,3 +46,62 @@ let get matrix coords =
 
 let set matrix coords value =
   matrix.values.(flatten_coords matrix coords) <- value
+
+let iter f matrix = Array.iter f matrix.values
+
+let iteri f matrix =
+  let row = ref 0 in
+  Array.iteri (fun i v ->
+      while matrix.counts.(succ !row) = i do incr row done;
+      f (matrix.indexes.(i), !row) v
+    ) matrix.values
+
+type 'a finger = { matrix: 'a t; index: int; row: int }
+
+let finger matrix ((_, row) as coords) =
+  { matrix; index = flatten_coords matrix coords; row }
+
+let get_finger finger =
+  finger.matrix.values.(finger.index)
+
+let set_finger finger value =
+  finger.matrix.values.(finger.index) <- value
+
+let next_on_row finger =
+  let matrix = finger.matrix in
+  let next_index = succ finger.index in
+  if next_index = matrix.counts.(succ finger.row) then
+    raise Not_found
+  else
+    matrix.values.(next_index), matrix.indexes.(next_index)
+
+let previous_on_row finger =
+  let matrix = finger.matrix in
+  let prev_index = pred finger.index in
+  if prev_index < matrix.counts.(finger.row) then
+    raise Not_found
+  else
+    matrix.values.(prev_index), matrix.indexes.(prev_index)
+
+let next_on_column finger =
+  let matrix = finger.matrix in
+  let col = matrix.indexes.(finger.index) in
+  let row_count = pred (Array.length matrix.counts) in
+  let rec loop = function
+    | n when n = row_count -> raise Not_found
+    | n ->
+       try matrix.values.(flatten_coords matrix (col, n)), n
+       with Not_found -> loop (succ n)
+  in
+  loop finger.row
+
+let previous_on_column finger =
+  let matrix = finger.matrix in
+  let col = matrix.indexes.(finger.index) in
+  let rec loop = function
+    | -1 -> raise Not_found
+    | n ->
+       try matrix.values.(flatten_coords matrix (col, n)), n
+       with Not_found -> loop (pred n)
+  in
+  loop finger.row
