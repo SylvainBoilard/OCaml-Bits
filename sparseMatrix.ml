@@ -60,8 +60,8 @@ let iteri f matrix =
 let iterf f matrix =
   let row = ref 0 in
   Array.iteri (fun index v ->
-      while matrix.counts.(succ !row) = i do incr row done;
-      f { matrix; index; row = !row) v
+      while matrix.counts.(succ !row) = index do incr row done;
+      f { matrix; index; row = !row } v
     ) matrix.values
 
 let finger matrix ((_, row) as coords) =
