@@ -18,7 +18,7 @@ module List =
       let aux _ =
         match !l with
         | hd::tl -> l := tl; hd
-        | [] -> invalid_arg "tl"
+        | [] -> failwith "yield"
       in
       aux
 
