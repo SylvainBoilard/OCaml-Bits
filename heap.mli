@@ -4,7 +4,7 @@ module type OrderedType =
     val compare: t -> t -> int
   end
 
-module type H =
+module type S =
   sig
     type elt
     type t
@@ -15,4 +15,4 @@ module type H =
     val top: t -> elt
   end
 
-module Make (Ord: OrderedType) : H with type elt = Ord.t
+module Make (Ord: OrderedType) : S with type elt = Ord.t

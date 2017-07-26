@@ -4,7 +4,7 @@ module type OrderedType =
     val compare: t -> t -> int
   end
 
-module type H =
+module type S =
   sig
     type elt
     type t
