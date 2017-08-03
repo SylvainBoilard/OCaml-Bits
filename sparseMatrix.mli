@@ -11,6 +11,7 @@ module Finger :
     val previous_on_row : 'a t -> 'a t
     val next_on_column : 'a t -> 'a t
     val previous_on_column : 'a t -> 'a t
+    val compare : 'a t -> 'a t -> int
   end
 
 type 'a t
@@ -24,4 +25,6 @@ val last : 'a t -> 'a Finger.t
 val iter : ('a -> unit) -> 'a t -> unit
 val iteri : (int * int -> 'a -> unit) -> 'a t -> unit
 val iterf : ('a Finger.t -> 'a -> unit) -> 'a t -> unit
+val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+val foldf : ('b -> 'a Finger.t -> 'b) -> 'b -> 'a t -> 'b
 

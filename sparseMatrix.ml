@@ -75,6 +75,12 @@ module Finger =
         else
           raise Not_found
       with Invalid_argument _ -> raise Not_found
+
+    let compare f1 f2 =
+      if f1.matrix == f2.matrix then
+        f1.index - f2.index
+      else
+        invalid_arg "Finger.compare: fingers from different matrices"
   end
 
 let of_list indexed_elements =
@@ -189,3 +195,14 @@ let iterf f matrix =
       while matrix.counts_to_row.(succ !row) = index do incr row done;
       f { Finger.matrix; index } v
     ) matrix.elements_by_row
+
+let fold f acc matrix =
+  Array.fold_left f acc matrix.elements_by_row
+
+let foldf f acc matrix =
+  let last_finger = last matrix in
+  let rec aux acc = function
+    | finger when finger = last_finger -> f acc finger
+    | finger -> aux (f acc finger) (Finger.next finger)
+  in
+  aux acc (first matrix)
