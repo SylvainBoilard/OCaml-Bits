@@ -7,30 +7,98 @@ type 'a t = {
     counts_to_row: int array
   }
 
-type 'a finger = { matrix: 'a t; index: int }
-
-module List =
+module Finger =
   struct
-    include List
+    type 'a matrix = 'a t
+    type 'a t = { matrix: 'a matrix; index: int }
 
-    let yield l =
-      let l = ref l in
-      let aux _ =
-        match !l with
-        | hd::tl -> l := tl; hd
-        | [] -> failwith "yield"
-      in
-      aux
+    let coords finger =
+      finger.matrix.column_indexes.(finger.index),
+      finger.matrix.row_indexes.(finger.index)
 
-    let rev_mapi f l =
-      let rec aux acc n = function
-        | [] -> acc
-        | hd::tl -> aux (f n hd::acc) (succ n) tl
-      in
-      aux [] 0 l
+    let get finger =
+      finger.matrix.elements_by_row.(finger.index)
+
+    let set finger value =
+      finger.matrix.elements_by_row.(finger.index) <- value
+
+    let next finger =
+      if finger.index = pred (Array.length finger.matrix.elements_by_row) then
+        raise Not_found
+      else
+        { finger with index = succ finger.index }
+
+    let previous finger =
+      if finger.index = 0 then
+        raise Not_found
+      else
+        { finger with index = pred finger.index }
+
+    let next_on_row finger =
+      let row_indexes = finger.matrix.row_indexes in
+      let new_index = succ finger.index in
+      try
+        if row_indexes.(finger.index) = row_indexes.(new_index) then
+          { finger with index = new_index }
+        else
+          raise Not_found
+      with Invalid_argument _ -> raise Not_found
+
+    let previous_on_row finger =
+      let row_indexes = finger.matrix.row_indexes in
+      let new_index = pred finger.index in
+      try
+        if row_indexes.(finger.index) = row_indexes.(new_index) then
+          { finger with index = new_index }
+        else
+          raise Not_found
+      with Invalid_argument _ -> raise Not_found
+
+    let next_on_column finger =
+      let column_indexes = finger.matrix.column_indexes in
+      let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
+      try
+        let new_index = finger.matrix.by_column_to_row.(succ index_by_columns) in
+        if column_indexes.(finger.index) = column_indexes.(new_index) then
+          { finger with index = new_index }
+        else
+          raise Not_found
+      with Invalid_argument _ -> raise Not_found
+
+    let previous_on_column finger =
+      let column_indexes = finger.matrix.column_indexes in
+      let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
+      try
+        let new_index = finger.matrix.by_column_to_row.(pred index_by_columns) in
+        if column_indexes.(finger.index) = column_indexes.(new_index) then
+          { finger with index = new_index }
+        else
+          raise Not_found
+      with Invalid_argument _ -> raise Not_found
   end
 
 let of_list indexed_elements =
+  let module List =
+    struct
+      include List
+
+      let yield l =
+        let l = ref l in
+        let aux _ =
+          match !l with
+          | hd::tl -> l := tl; hd
+          | [] -> failwith "yield"
+        in
+        aux
+
+      let rev_mapi f l =
+        let rec aux acc n = function
+          | [] -> acc
+          | hd::tl -> aux (f n hd::acc) (succ n) tl
+        in
+        aux [] 0 l
+    end
+  in
   let rev_sorted_by_row =
     List.sort (fun ((c1, r1), _) ((c2, r2), _) ->
         if r1 = r2 then c2 - c1 else r2 - r1
@@ -91,6 +159,21 @@ let get matrix coords =
 let set matrix coords value =
   matrix.elements_by_row.(flatten_coords matrix coords) <- value
 
+let finger matrix coords =
+  { Finger.matrix; index = flatten_coords matrix coords }
+
+let first matrix =
+  if matrix.elements_by_row = [||] then
+    raise Not_found
+  else
+    { Finger.matrix; index = 0 }
+
+let last matrix =
+  if matrix.elements_by_row = [||] then
+    raise Not_found
+  else
+    { Finger.matrix; index = pred (Array.length matrix.elements_by_row) }
+
 let iter f matrix = Array.iter f matrix.elements_by_row
 
 let iteri f matrix =
@@ -104,84 +187,5 @@ let iterf f matrix =
   let row = ref 0 in
   Array.iteri (fun index v ->
       while matrix.counts_to_row.(succ !row) = index do incr row done;
-      f { matrix; index } v
+      f { Finger.matrix; index } v
     ) matrix.elements_by_row
-
-let finger matrix coords =
-  { matrix; index = flatten_coords matrix coords }
-
-let coords finger =
-  finger.matrix.column_indexes.(finger.index),
-  finger.matrix.row_indexes.(finger.index)
-
-let get_finger finger =
-  finger.matrix.elements_by_row.(finger.index)
-
-let set_finger finger value =
-  finger.matrix.elements_by_row.(finger.index) <- value
-
-let first matrix =
-  if matrix.elements_by_row = [||] then
-    raise Not_found
-  else
-    { matrix; index = 0 }
-
-let last matrix =
-  if matrix.elements_by_row = [||] then
-    raise Not_found
-  else
-    { matrix; index = pred (Array.length matrix.elements_by_row) }
-
-let next finger =
-  if finger.index = pred (Array.length finger.matrix.elements_by_row) then
-    raise Not_found
-  else
-    { finger with index = succ finger.index }
-
-let previous finger =
-  if finger.index = 0 then
-    raise Not_found
-  else
-    { finger with index = pred finger.index }
-
-let next_on_row finger =
-  let row_indexes = finger.matrix.row_indexes in
-  let new_index = succ finger.index in
-  try
-    if row_indexes.(finger.index) = row_indexes.(new_index) then
-      { finger with index = new_index }
-    else
-      raise Not_found
-  with Invalid_argument _ -> raise Not_found
-
-let previous_on_row finger =
-  let row_indexes = finger.matrix.row_indexes in
-  let new_index = pred finger.index in
-  try
-    if row_indexes.(finger.index) = row_indexes.(new_index) then
-      { finger with index = new_index }
-    else
-      raise Not_found
-  with Invalid_argument _ -> raise Not_found
-
-let next_on_column finger =
-  let column_indexes = finger.matrix.column_indexes in
-  let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
-  try
-    let new_index = finger.matrix.by_column_to_row.(succ index_by_columns) in
-    if column_indexes.(finger.index) = column_indexes.(new_index) then
-      { finger with index = new_index }
-    else
-      raise Not_found
-  with Invalid_argument _ -> raise Not_found
-
-let previous_on_column finger =
-  let column_indexes = finger.matrix.column_indexes in
-  let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
-  try
-    let new_index = finger.matrix.by_column_to_row.(pred index_by_columns) in
-    if column_indexes.(finger.index) = column_indexes.(new_index) then
-      { finger with index = new_index }
-    else
-      raise Not_found
-  with Invalid_argument _ -> raise Not_found
