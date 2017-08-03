@@ -120,6 +120,30 @@ let get_finger finger =
 let set_finger finger value =
   finger.matrix.elements_by_row.(finger.index) <- value
 
+let first matrix =
+  if matrix.elements_by_row = [||] then
+    raise Not_found
+  else
+    { matrix; index = 0 }
+
+let last matrix =
+  if matrix.elements_by_row = [||] then
+    raise Not_found
+  else
+    { matrix; index = pred (Array.length matrix.elements_by_row) }
+
+let next finger =
+  if finger.index = pred (Array.length finger.matrix.elements_by_row) then
+    raise Not_found
+  else
+    { finger with index = succ finger.index }
+
+let previous finger =
+  if finger.index = 0 then
+    raise Not_found
+  else
+    { finger with index = pred finger.index }
+
 let next_on_row finger =
   let row_indexes = finger.matrix.row_indexes in
   let new_index = succ finger.index in
