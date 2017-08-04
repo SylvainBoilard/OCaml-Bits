@@ -17,6 +17,7 @@ module Finger :
 type 'a t
 
 val of_list : ((int * int) * 'a) list -> 'a t
+val cardinal : 'a t -> int
 val get : 'a t -> int * int -> 'a
 val set : 'a t -> int * int -> 'a -> unit
 val finger : 'a t -> int * int -> 'a Finger.t

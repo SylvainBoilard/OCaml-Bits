@@ -159,6 +159,8 @@ let flatten_coords matrix (column, row) =
   try loop matrix.counts_to_row.(row) matrix.counts_to_row.(succ row)
   with Invalid_argument _ -> raise Not_found
 
+let cardinal matrix = Array.length matrix.elements_by_row
+
 let get matrix coords =
   matrix.elements_by_row.(flatten_coords matrix coords)
 
