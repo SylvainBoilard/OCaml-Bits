@@ -10,6 +10,7 @@ module type S =
     type t
     exception Empty
     val empty: t
+    val merge: t -> t -> t
     val insert: elt -> t -> t
     val pop: t -> t
     val top: t -> elt

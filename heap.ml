@@ -10,6 +10,7 @@ module type S =
     type t
     exception Empty
     val empty: t
+    val merge: t -> t -> t
     val insert: elt -> t -> t
     val pop: t -> t
     val top: t -> elt
@@ -35,6 +36,15 @@ module Make (Ord: OrderedType) =
            meld (H (e1, h2 :: l1) :: l') tl
          else
            meld (H (e2, h1 :: l2) :: l') tl
+
+    let merge h1 h2 =
+      match h1, h2 with
+      | Some (H (e1, l1) as h1), Some (H (e2, l2) as h2) ->
+         if Ord.compare e1 e2 < 0 then
+           Some (H (e1, h2 :: l1))
+         else
+           Some (H (e2, h1 :: l2))
+      | None, h | h, None -> h
               
     let insert e = function
       | None -> Some (H (e, []))
