@@ -19,45 +19,46 @@ module type S =
 module Make (Ord: OrderedType) =
   struct
     type elt = Ord.t
-    type h = H of elt * h list
-    type t = h option
+    type t = EmptyHeap | Heap of elt * t list
 
     exception Empty
 
-    let empty = None
+    let empty = EmptyHeap
 
     let rec meld l' l =
       match l', l with
+      | _, EmptyHeap :: _ | _, _ :: EmptyHeap :: _
+      | EmptyHeap :: _, _ -> assert false
       | [], h :: [] | h :: [], [] -> h
       | _, h :: [] -> meld [] (h :: l')
       | _, [] -> assert (l' <> []); meld [] l'
-      | _, (H (e1, l1) as h1) :: (H (e2, l2) as h2) :: tl ->
+      | _, (Heap (e1, l1) as h1) :: (Heap (e2, l2) as h2) :: tl ->
          if Ord.compare e1 e2 < 0 then
-           meld (H (e1, h2 :: l1) :: l') tl
+           meld (Heap (e1, h2 :: l1) :: l') tl
          else
-           meld (H (e2, h1 :: l2) :: l') tl
+           meld (Heap (e2, h1 :: l2) :: l') tl
 
     let merge h1 h2 =
       match h1, h2 with
-      | Some (H (e1, l1) as h1), Some (H (e2, l2) as h2) ->
+      | Heap (e1, l1), Heap (e2, l2) ->
          if Ord.compare e1 e2 < 0 then
-           Some (H (e1, h2 :: l1))
+           Heap (e1, h2 :: l1)
          else
-           Some (H (e2, h1 :: l2))
-      | None, h | h, None -> h
+           Heap (e2, h1 :: l2)
+      | EmptyHeap, h | h, EmptyHeap -> h
               
     let insert e = function
-      | None -> Some (H (e, []))
-      | Some (H (e', l)) when Ord.compare e' e < 0 ->
-         Some (H (e', H (e, []) :: l))
-      | Some h -> Some (H (e, [h]))
+      | EmptyHeap -> Heap (e, [])
+      | Heap (e', l) when Ord.compare e' e < 0 ->
+         Heap (e', Heap (e, []) :: l)
+      | h -> Heap (e, [h])
 
     let pop = function
-      | None -> raise Empty
-      | Some (H (_, [])) -> None
-      | Some (H (_, l)) -> Some (meld [] l)
+      | EmptyHeap -> raise Empty
+      | Heap (_, []) -> EmptyHeap
+      | Heap (_, l) -> meld [] l
 
     let top = function
-      | None -> raise Empty
-      | Some (H (e, _)) -> e
+      | EmptyHeap -> raise Empty
+      | Heap (e, _) -> e
   end
