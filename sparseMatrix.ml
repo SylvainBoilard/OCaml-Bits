@@ -185,26 +185,21 @@ let last matrix =
 let iter f matrix = Array.iter f matrix.elements_by_row
 
 let iteri f matrix =
-  let row = ref 0 in
   Array.iteri (fun i v ->
-      while matrix.counts_to_row.(succ !row) = i do incr row done;
-      f (matrix.column_indexes.(i), !row) v
+      f (matrix.column_indexes.(i), matrix.row_indexes.(i)) v
     ) matrix.elements_by_row
 
 let iterf f matrix =
-  let row = ref 0 in
-  Array.iteri (fun index v ->
-      while matrix.counts_to_row.(succ !row) = index do incr row done;
-      f { Finger.matrix; index } v
-    ) matrix.elements_by_row
+  for index = 0 to pred (Array.length matrix.elements_by_row) do
+    f { Finger.matrix; index } matrix.elements_by_row.(index)
+  done
 
-let fold f acc matrix =
+let fold_left f acc matrix =
   Array.fold_left f acc matrix.elements_by_row
 
-let foldf f acc matrix =
-  let last_finger = last matrix in
-  let rec aux acc = function
-    | finger when finger = last_finger -> f acc finger
-    | finger -> aux (f acc finger) (Finger.next finger)
-  in
-  aux acc (first matrix)
+let fold_leftf f acc matrix =
+  let acc = ref acc in
+  for index = 0 to pred (Array.length matrix.elements_by_row) do
+    acc := f !acc { Finger.matrix; index }
+  done;
+  !acc

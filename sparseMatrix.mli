@@ -26,6 +26,6 @@ val last : 'a t -> 'a Finger.t
 val iter : ('a -> unit) -> 'a t -> unit
 val iteri : (int * int -> 'a -> unit) -> 'a t -> unit
 val iterf : ('a Finger.t -> 'a -> unit) -> 'a t -> unit
-val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
-val foldf : ('b -> 'a Finger.t -> 'b) -> 'b -> 'a t -> 'b
+val fold_left : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+val fold_leftf : ('b -> 'a Finger.t -> 'b) -> 'b -> 'a t -> 'b
 
