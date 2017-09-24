@@ -25,19 +25,6 @@ module Make (Ord: OrderedType) =
 
     let empty = EmptyHeap
 
-    let rec meld l' l =
-      match l', l with
-      | _, EmptyHeap :: _ | _, _ :: EmptyHeap :: _
-      | EmptyHeap :: _, _ -> assert false
-      | [], h :: [] | h :: [], [] -> h
-      | _, h :: [] -> meld [] (h :: l')
-      | _, [] -> assert (l' <> []); meld [] l'
-      | _, (Heap (e1, l1) as h1) :: (Heap (e2, l2) as h2) :: tl ->
-         if Ord.compare e1 e2 < 0 then
-           meld (Heap (e1, h2 :: l1) :: l') tl
-         else
-           meld (Heap (e2, h1 :: l2) :: l') tl
-
     let merge h1 h2 =
       match h1, h2 with
       | Heap (e1, l1), Heap (e2, l2) ->
@@ -46,7 +33,14 @@ module Make (Ord: OrderedType) =
          else
            Heap (e2, h1 :: l2)
       | EmptyHeap, h | h, EmptyHeap -> h
-              
+
+    let rec meld l =
+      let rec aux acc = function
+        | [] -> acc
+        | h :: [] -> merge acc h
+        | h1 :: h2 :: tl -> aux (merge acc (merge h1 h2)) tl
+      in aux EmptyHeap l
+
     let insert e = function
       | EmptyHeap -> Heap (e, [])
       | Heap (e', l) when Ord.compare e' e < 0 ->
@@ -55,8 +49,7 @@ module Make (Ord: OrderedType) =
 
     let pop = function
       | EmptyHeap -> raise Empty
-      | Heap (_, []) -> EmptyHeap
-      | Heap (_, l) -> meld [] l
+      | Heap (_, l) -> meld l
 
     let top = function
       | EmptyHeap -> raise Empty
