@@ -9,11 +9,11 @@ module Subarray =
     type 'a t = { symarray: 'a symarray; index: int }
 
     let fold_left f acc sa =
-      let rec aux acc index j =
-        if j < sa.index then
-          aux (f acc sa.symarray.data.(index)) (succ index) (succ j)
-        else if j < sa.symarray.length then
-          aux (f acc sa.symarray.data.(index)) (succ index + j) (succ j)
+      let rec aux acc index i =
+        if i < sa.index then
+          aux (f acc sa.symarray.data.(index)) (succ index) (succ i)
+        else if i < sa.symarray.length then
+          aux (f acc sa.symarray.data.(index)) (succ index + i) (succ i)
         else acc
       in
       aux acc (sa.index * (sa.index + 1) / 2) 0
