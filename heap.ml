@@ -11,6 +11,7 @@ module type S =
     exception Empty
     val empty: t
     val merge: t -> t -> t
+    val singleton: elt -> t
     val insert: elt -> t -> t
     val pop: t -> t
     val top: t -> elt
@@ -40,6 +41,8 @@ module Make (Ord: OrderedType) =
         | h :: [] -> merge acc h
         | h1 :: h2 :: tl -> aux (merge acc (merge h1 h2)) tl
       in aux EmptyHeap l
+
+    let singleton e = Heap (e, [])
 
     let insert e = function
       | EmptyHeap -> Heap (e, [])
