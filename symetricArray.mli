@@ -3,6 +3,7 @@ module Subarray :
     type 'a t
 
     val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
+    val fold_lefti : ('a -> int -> 'b -> 'a) -> 'a -> 'b t -> 'a
   end
 
 type 'a t

@@ -17,6 +17,16 @@ module Subarray =
         else acc
       in
       aux acc (sa.index * (sa.index + 1) / 2) 0
+
+    let fold_lefti f acc sa =
+      let rec aux acc index i =
+        if i < sa.index then
+          aux (f acc i sa.symarray.data.(index)) (succ index) (succ i)
+        else if i < sa.symarray.length then
+          aux (f acc i sa.symarray.data.(index)) (succ index + i) (succ i)
+        else acc
+      in
+      aux acc (sa.index * (sa.index + 1) / 2) 0
   end
 
 let norm_coords ((i, j) as c) = if i <= j then c else j, i
