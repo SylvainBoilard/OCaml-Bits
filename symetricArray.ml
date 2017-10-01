@@ -3,6 +3,22 @@ type 'a t = {
     data: 'a array
   }
 
+module Subarray =
+  struct
+    type 'a symarray = 'a t
+    type 'a t = { symarray: 'a symarray; index: int }
+
+    let fold_left f acc sa =
+      let rec aux acc index j =
+        if j < sa.index then
+          aux (f acc sa.symarray.data.(index)) (succ index) (succ j)
+        else if j < sa.symarray.length then
+          aux (f acc sa.symarray.data.(index)) (succ index + j) (succ j)
+        else acc
+      in
+      aux acc (sa.index * (sa.index + 1) / 2) 0
+  end
+
 let norm_coords ((i, j) as c) = if i <= j then c else j, i
 
 let make l e =
@@ -22,3 +38,5 @@ let set a c e =
     invalid_arg "index out of bounds"
   else
     Array.unsafe_set a.data (i + j * (j + 1) / 2) e
+
+let get_subarray symarray index = Subarray.{ symarray; index }
