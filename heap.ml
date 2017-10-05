@@ -4,15 +4,15 @@ module type OrderedType =
     val compare: t -> t -> int
   end
 
-module type S =
+module type H =
   sig
     type elt
     type t
     exception Empty
     val empty: t
-    val merge: t -> t -> t
     val singleton: elt -> t
     val insert: elt -> t -> t
+    val merge: t -> t -> t
     val pop: t -> t
     val top: t -> elt
   end
@@ -26,22 +26,6 @@ module Make (Ord: OrderedType) =
 
     let empty = EmptyHeap
 
-    let merge h1 h2 =
-      match h1, h2 with
-      | Heap (e1, l1), Heap (e2, l2) ->
-         if Ord.compare e1 e2 < 0 then
-           Heap (e1, h2 :: l1)
-         else
-           Heap (e2, h1 :: l2)
-      | EmptyHeap, h | h, EmptyHeap -> h
-
-    let rec meld l =
-      let rec aux acc = function
-        | [] -> acc
-        | h :: [] -> merge acc h
-        | h1 :: h2 :: tl -> aux (merge acc (merge h1 h2)) tl
-      in aux EmptyHeap l
-
     let singleton e = Heap (e, [])
 
     let insert e = function
@@ -49,6 +33,21 @@ module Make (Ord: OrderedType) =
       | Heap (e', l) when Ord.compare e' e < 0 ->
          Heap (e', Heap (e, []) :: l)
       | h -> Heap (e, [h])
+
+    let merge h1 h2 = match h1, h2 with
+      | EmptyHeap, h | h, EmptyHeap -> h
+      | Heap (e1, l1), Heap (e2, l2) ->
+         if Ord.compare e1 e2 < 0 then
+           Heap (e1, h2 :: l1)
+         else Heap (e2, h1 :: l2)
+
+    let meld l =
+      let rec aux acc = function
+        | [] -> acc
+        | h :: [] -> merge acc h
+        | h1 :: h2 :: tl -> aux (merge acc (merge h1 h2)) tl
+      in
+      aux EmptyHeap l
 
     let pop = function
       | EmptyHeap -> raise Empty
