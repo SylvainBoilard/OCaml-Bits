@@ -15,4 +15,6 @@ val insert_after : 'a node -> 'a -> unit
 val add_first : 'a root -> 'a -> unit
 val add_last : 'a root -> 'a -> unit
 val remove : 'a node -> unit
+val put_back : 'a node -> unit
+val remove_and_neuter : 'a node -> unit
 val get : 'a node -> 'a

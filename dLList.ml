@@ -23,7 +23,7 @@ let poly_self elem = match elem.next with
 
 let create () =
   let rec dllist = { prev = Root dllist; next = Obj.magic (); data = Nil } in
-  dllist.next <- dllist.prev; (* Only one poly_elem must exist per elem. *)
+  dllist.next <- dllist.prev; (* Only one poly_elem should exist per elem. *)
   dllist
 
 let first = function
@@ -89,12 +89,30 @@ let add_last (root : 'a root) value =
   poly_insert_before root value
 
 let remove (node : 'a node) =
-  let aux_prev prev_elem = prev_elem.next <- node.next in
-  let aux_next next_elem = next_elem.prev <- node.prev in
+  begin match node.prev with
+  | Node prev_elem -> prev_elem.next <- node.next
+  | Root prev_elem -> prev_elem.next <- node.next
+  end;
+  begin match node.next with
+  | Node next_elem -> next_elem.prev <- node.prev
+  | Root next_elem -> next_elem.prev <- node.prev
+  end
+
+let put_back (node : 'a node) =
   let poly_node = poly_self node in
-  (match node.prev with Root r -> aux_prev r | Node n -> aux_prev n);
-  (match node.next with Root r -> aux_next r | Node n -> aux_next n);
-  node.prev <- poly_node;
-  node.next <- poly_node
+  begin match node.prev with
+  | Node prev_elem -> prev_elem.next <- poly_node
+  | Root prev_elem -> prev_elem.next <- poly_node
+  end;
+  begin match node.next with
+  | Node next_elem -> next_elem.prev <- poly_node
+  | Root next_elem -> next_elem.prev <- poly_node
+  end
+
+let remove_and_neuter node =
+  let poly_node = poly_self node in
+  remove node;
+  node.next <- poly_node;
+  node.prev <- poly_node
 
 let get { data = Value v; _ } = v
