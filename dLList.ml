@@ -72,10 +72,10 @@ let remove (node, _) =
   (match node.prev with Node (prev, _) | Root prev -> prev.next <- node.next);
   (match node.next with Node (next, _) | Root next -> next.prev <- node.prev)
 
-let put_back (node, _) =
-  let poly_node = poly_self node in
-  (match node.prev with Node (prev, _) | Root prev -> prev.next <- poly_node);
-  (match node.next with Node (next, _) | Root next -> next.prev <- poly_node)
+let put_back ((node, _) as elem) =
+  let self = Node elem in
+  (match node.prev with Node (prev, _) | Root prev -> prev.next <- self);
+  (match node.next with Node (next, _) | Root next -> next.prev <- self)
 
 let remove_and_neuter ((node, _) as elem) =
   let poly_node = poly_self node in
