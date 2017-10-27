@@ -68,6 +68,10 @@ let insert_after (node, _) value = insert_after_neighbor node value
 
 let insert_before (node, _) value = insert_before_neighbor node value
 
+let rec retrieve_root = function
+  | { next = Node node; _ }, _ -> retrieve_root node
+  | { next = Root root; _ }, _ -> root
+
 let remove (node, _) =
   (match node.prev with Node (prev, _) | Root prev -> prev.next <- node.next);
   (match node.next with Node (next, _) | Root next -> next.prev <- node.prev)
