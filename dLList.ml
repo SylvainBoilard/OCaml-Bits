@@ -68,6 +68,17 @@ let insert_after (node, _) value = insert_after_neighbor node value
 
 let insert_before (node, _) value = insert_before_neighbor node value
 
+let is_empty = function
+  | { next = Node _; _ } -> false
+  | { next = Root _; _ } -> true
+
+let length root =
+  let rec loop acc = function
+    | Node ({ next; _ }, _) -> loop (succ acc) next
+    | Root _ -> acc
+  in
+  loop 0 root.next
+
 let rec retrieve_root = function
   | { next = Node node; _ }, _ -> retrieve_root node
   | { next = Root root; _ }, _ -> root
@@ -88,3 +99,24 @@ let remove_and_neuter ((node, _) as elem) =
   node.prev <- poly_node
 
 let get (_, v) = v
+
+let iter f root =
+  let rec loop = function
+    | Node ({ next; _ }, v) -> f v; loop next
+    | Root _ -> ()
+  in
+  loop root.next
+
+let rev_iter f root =
+  let rec loop = function
+    | Node ({ prev; _ }, v) -> f v; loop prev
+    | Root _ -> ()
+  in
+  loop root.prev
+
+let fold_left f a root =
+  let rec aux acc = function
+    | Node ({ next; _ }, v) -> aux (f acc v) next
+    | Root _ -> acc
+  in
+  aux a root.next
