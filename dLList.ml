@@ -120,3 +120,10 @@ let fold_left f a root =
     | Root _ -> acc
   in
   aux a root.next
+
+let fold_right f root a =
+  let rec aux acc = function
+    | Node ({ prev; _ }, v) -> aux (f v acc) prev
+    | Root _ -> acc
+  in
+  aux a root.prev
