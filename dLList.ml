@@ -79,6 +79,14 @@ let length root =
   in
   loop 0 root.next
 
+let copy root =
+  let new_root = create () in
+  let rec loop = function
+    | Node ({ next; _ }, v) -> insert_before_neighbor new_root v; loop next
+    | Root _ -> new_root
+  in
+  loop root.next
+
 let rec retrieve_root = function
   | { next = Node node; _ }, _ -> retrieve_root node
   | { next = Root root; _ }, _ -> root

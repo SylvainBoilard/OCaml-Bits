@@ -16,6 +16,7 @@ val insert_after : 'a node -> 'a -> unit
 val insert_before : 'a node -> 'a -> unit
 val is_empty : 'a root -> bool
 val length : 'a root -> int
+val copy : 'a root -> 'a root
 val retrieve_root : 'a node -> 'a root
 val remove : 'a node -> unit
 val put_back : 'a node -> unit
