@@ -26,3 +26,4 @@ val iter : ('a -> unit) -> 'a root -> unit
 val rev_iter : ('a -> unit) -> 'a root -> unit
 val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b root -> 'a
 val fold_right : ('a -> 'b -> 'b) -> 'a root -> 'b -> 'b
+val of_list : 'a list -> 'a root

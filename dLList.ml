@@ -135,3 +135,11 @@ let fold_right f root a =
     | Root _ -> acc
   in
   aux a root.prev
+
+let of_list list =
+  let root = create () in
+  let rec loop = function
+    | [] -> root
+    | hd :: tl -> insert_before_neighbor root hd; loop tl
+  in
+  loop list
