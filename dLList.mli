@@ -10,6 +10,8 @@ val next : 'a node -> 'a node
 val next_opt : 'a node -> 'a node option
 val prev : 'a node -> 'a node
 val prev_opt : 'a node -> 'a node option
+val at : int -> 'a root -> 'a node
+val rev_at : int -> 'a root -> 'a node
 val add_first : 'a root -> 'a -> unit
 val add_last : 'a root -> 'a -> unit
 val insert_after : 'a node -> 'a -> unit

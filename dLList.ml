@@ -48,6 +48,26 @@ let prev_opt = function
   | { prev = Node node; _ }, _ -> Some node
   | _ -> None
 
+let at index root =
+  let rec loop n = function
+    | Node node when n = 0 -> node
+    | Node ({ next; _ }, _) -> loop (pred n) next
+    | Root _ -> raise Not_found
+  in
+  if index < 0
+  then failwith "DLList.at: negative index"
+  else loop index root.next
+
+let rev_at index root =
+  let rec loop n = function
+    | Node node when n = 0 -> node
+    | Node ({ prev; _ }, _) -> loop (pred n) prev
+    | Root _ -> raise Not_found
+  in
+  if index < 0
+  then failwith "DLList.rev_at: negative index"
+  else loop index root.prev
+
 let insert_before_neighbor elem value =
   let prev_elem = match elem.prev with Node (prev, _) | Root prev -> prev in
   let new_node = Node ({ prev = elem.prev; next = prev_elem.next }, value) in
