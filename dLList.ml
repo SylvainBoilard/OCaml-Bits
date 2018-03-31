@@ -1,165 +1,189 @@
-type 'a root = 'a neighbors
- and 'a node = 'a neighbors * 'a
- and 'a neighbors = {
-     mutable prev: 'a elem;
-     mutable next: 'a elem
-   }
- and 'a elem =
-   | Root of 'a root
-   | Node of 'a node
+type ('a, _) elem =
+  | Root : ('a, _) elem * ('a, _) elem -> ('a, [`root]) elem
+  | Node : ('a, _) elem * ('a, _) elem * 'a -> ('a, [`node]) elem
+type 'a root = ('a, [`root]) elem
+type 'a node = ('a, [`node]) elem
 
-let poly_self elem = match elem.next with
-  | Node ({ prev; _ }, _) | Root { prev; _ } -> prev
+type 'a mutable_elem = {
+    mutable prev: 'a mutable_elem;
+    mutable next: 'a mutable_elem
+  }
 
 let create () =
-  let rec dllist = { prev = Root dllist; next = Obj.magic () } in
-  dllist.next <- dllist.prev; (* Only one elem should exist per element. *)
-  dllist
+  (* We can not allocate a Root right away because it might get optimized out as
+     a compile-time constant since it is not supposed to have mutable fields. *)
+  let rec root = { prev = root; next = root } in
+  (Obj.magic root : 'a root)
+
+let insert_between_elems prev next value =
+  let node : 'a mutable_elem = Obj.magic (Node (prev, next, value)) in
+  let prev : 'a mutable_elem = Obj.magic prev in
+  let next : 'a mutable_elem = Obj.magic next in
+  prev.next <- node;
+  next.prev <- node
+
+let remove (node : 'a node) =
+  let node : 'a mutable_elem = Obj.magic node in
+  node.prev.next <- node.next;
+  node.next.prev <- node.prev
+
+let put_back (node : 'a node) =
+  let node : 'a mutable_elem = Obj.magic node in
+  node.prev.next <- node;
+  node.next.prev <- node
+
+let remove_and_neuter (node : 'a node) =
+  let node : 'a mutable_elem = Obj.magic node in
+  node.prev.next <- node.next;
+  node.next.prev <- node.prev;
+  node.next <- node;
+  node.prev <- node
 
 let first = function
-  | { next = Node node; _ } -> node
-  | _ -> raise Not_found
+  | Root (_, (Node _ as node)) -> (node : 'a node)
+  | Root (_, Root _) -> raise Not_found
 
 let first_opt = function
-  | { next = Node node; _ } -> Some node
-  | _ -> None
+  | Root (_, (Node _ as node)) -> Some (node : 'a node)
+  | Root (_, Root _) -> None
 
 let last = function
-  | { prev = Node node; _ } -> node
-  | _ -> raise Not_found
+  | Root (Node _ as node, _) -> (node : 'a node)
+  | Root (Root _, _) -> raise Not_found
 
 let last_opt = function
-  | { prev = Node node; _ } -> Some node
-  | _ -> None
+  | Root (Node _ as node, _) -> Some (node : 'a node)
+  | Root (Root _, _) -> None
 
 let next = function
-  | { next = Node node; _ }, _ -> node
-  | _ -> raise Not_found
+  | Node (_, (Node _ as node), _) -> (node : 'a node)
+  | Node (_, Root _, _) -> raise Not_found
 
 let next_opt = function
-  | { next = Node node; _ }, _ -> Some node
-  | _ -> None
+  | Node (_, (Node _ as node), _) -> Some (node : 'a node)
+  | Node (_, Root _, _) -> None
 
 let prev = function
-  | { prev = Node node; _ }, _ -> node
-  | _ -> raise Not_found
+  | Node (Node _ as node, _, _) -> (node : 'a node)
+  | Node (Root _, _, _) -> raise Not_found
 
 let prev_opt = function
-  | { prev = Node node; _ }, _ -> Some node
-  | _ -> None
+  | Node (Node _ as node, _, _) -> Some (node : 'a node)
+  | Node (Root _, _, _) -> None
 
 let at index root =
-  let rec loop n = function
-    | Node node when n = 0 -> node
-    | Node ({ next; _ }, _) -> loop (pred n) next
+  let rec skip : type k. int -> ('a, k) elem -> 'a node = fun n ->
+    function
     | Root _ -> raise Not_found
+    | Node _ as node when n = 0 -> node
+    | Node (_, next, _) -> skip (pred n) next
   in
+  let Root (_, first) = root in
   if index < 0
   then failwith "DLList.at: negative index"
-  else loop index root.next
+  else skip index first
 
 let rev_at index root =
-  let rec loop n = function
-    | Node node when n = 0 -> node
-    | Node ({ prev; _ }, _) -> loop (pred n) prev
+  let rec skip : type k. int -> ('a, k) elem -> 'a node = fun n ->
+    function
     | Root _ -> raise Not_found
+    | Node _ as node when n = 0 -> node
+    | Node (prev, _, _) -> skip (pred n) prev
   in
+  let Root (last, _) = root in
   if index < 0
   then failwith "DLList.rev_at: negative index"
-  else loop index root.prev
+  else skip index last
 
-let insert_before_neighbor elem value =
-  let prev_elem = match elem.prev with Node (prev, _) | Root prev -> prev in
-  let new_node = Node ({ prev = elem.prev; next = prev_elem.next }, value) in
-  prev_elem.next <- new_node;
-  elem.prev <- new_node
+let add_first root value =
+  let Root (_, first) = root in
+  insert_between_elems root first value
 
-let insert_after_neighbor elem value =
-  let next_elem = match elem.next with Node (next, _) | Root next -> next in
-  let new_node = Node ({ prev = next_elem.prev; next = elem.next }, value) in
-  next_elem.prev <- new_node;
-  elem.next <- new_node
+let add_last root value =
+  let Root (last, _) = root in
+  insert_between_elems last root value
 
-let add_first root value = insert_after_neighbor root value
+let insert_after node value =
+  let Node (_, next, _) = node in
+  insert_between_elems node next value
 
-let add_last root value = insert_before_neighbor root value
-
-let insert_after (node, _) value = insert_after_neighbor node value
-
-let insert_before (node, _) value = insert_before_neighbor node value
+let insert_before node value =
+  let Node (prev, _, _) = node in
+  insert_between_elems prev node value
 
 let is_empty = function
-  | { next = Node _; _ } -> false
-  | { next = Root _; _ } -> true
+  | Root (Node _, _) -> false
+  | Root (Root _, _) -> true
 
 let length root =
-  let rec loop acc = function
-    | Node ({ next; _ }, _) -> loop (succ acc) next
-    | Root _ -> acc
+  let rec aux : type k. int -> ('a, k) elem -> int = fun count ->
+    function
+    | Node (_, next, _) -> aux (succ count) next
+    | Root _ -> count
   in
-  loop 0 root.next
+  let Root (_, first) = root in
+  aux 0 first
 
-let copy root =
+let copy dllist =
   let new_root = create () in
-  let rec loop = function
-    | Node ({ next; _ }, v) -> insert_before_neighbor new_root v; loop next
+  let rec aux : type k. ('a, k) elem -> 'a root =
+    function
+    | Node (_, next, v) ->
+       let Root (new_last, _) = new_root in
+       insert_between_elems new_last new_root v;
+       aux next
     | Root _ -> new_root
   in
-  loop root.next
+  let Root (_, first) = dllist in
+  aux first
 
-let rec retrieve_root = function
-  | { next = Node node; _ }, _ -> retrieve_root node
-  | { next = Root root; _ }, _ -> root
+let rec retrieve_root : type k. ('a, k) elem -> 'a root = function
+  | Node (_, next, _) -> retrieve_root next
+  | Root _ as root -> root
 
-let remove (node, _) =
-  (match node.prev with Node (prev, _) | Root prev -> prev.next <- node.next);
-  (match node.next with Node (next, _) | Root next -> next.prev <- node.prev)
-
-let put_back ((node, _) as elem) =
-  let self = Node elem in
-  (match node.prev with Node (prev, _) | Root prev -> prev.next <- self);
-  (match node.next with Node (next, _) | Root next -> next.prev <- self)
-
-let remove_and_neuter ((node, _) as elem) =
-  let poly_node = poly_self node in
-  remove elem;
-  node.next <- poly_node;
-  node.prev <- poly_node
-
-let get (_, v) = v
+let get (Node (_, _, v)) = v
 
 let iter f root =
-  let rec loop = function
-    | Node ({ next; _ }, v) -> f v; loop next
+  let rec aux : type k. ('a, k) elem -> unit = function
+    | Node (_, next, v) -> f v; aux next
     | Root _ -> ()
   in
-  loop root.next
+  let Root (_, first) = root in
+  aux first
 
 let rev_iter f root =
-  let rec loop = function
-    | Node ({ prev; _ }, v) -> f v; loop prev
+  let rec aux : type k. ('a, k) elem -> unit = function
+    | Node (prev, _, v) -> f v; aux prev
     | Root _ -> ()
   in
-  loop root.prev
+  let Root (last, _) = root in
+  aux last
 
 let fold_left f a root =
-  let rec aux acc = function
-    | Node ({ next; _ }, v) -> aux (f acc v) next
+  let rec aux : type k. 'b -> ('a, k) elem -> 'b = fun acc ->
+    function
+    | Node (_, next, v) -> aux (f acc v) next
     | Root _ -> acc
   in
-  aux a root.next
+  let Root (_, first) = root in
+  aux a first
 
 let fold_right f root a =
-  let rec aux acc = function
-    | Node ({ prev; _ }, v) -> aux (f v acc) prev
+  let rec aux : type k. 'b -> ('a, k) elem -> 'b = fun acc ->
+    function
+    | Node (prev, _, v) -> aux (f v acc) prev
     | Root _ -> acc
   in
-  aux a root.prev
+  let Root (last, _) = root in
+  aux a last
 
 let of_list list =
   let root = create () in
-  let rec loop = function
+  let rec aux = function
     | [] -> root
-    | hd :: tl -> insert_before_neighbor root hd; loop tl
+    | hd :: tl ->
+       let Root (prev, _) = root in
+       insert_between_elems prev root hd;
+       aux tl
   in
-  loop list
+  aux list
