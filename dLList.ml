@@ -28,13 +28,15 @@ let insert_between_elems prev next value =
 
 let remove (node : 'a node) =
   let node : 'a mutable_elem = Obj.magic node in
-  node.prev.next <- node.next;
-  node.next.prev <- node.prev
+  if node.prev.next != node || node.next.prev != node
+  then invalid_arg "DLList.remove: node already removed"
+  else (node.prev.next <- node.next; node.next.prev <- node.prev)
 
 let put_back (node : 'a node) =
   let node : 'a mutable_elem = Obj.magic node in
-  node.prev.next <- node;
-  node.next.prev <- node
+  if node.prev.next != node.next || node.next.prev != node.prev
+  then invalid_arg "DLList.put_back: previous neighbors have invalid state"
+  else (node.prev.next <- node; node.next.prev <- node)
 
 let first = function
   | Root (_, (Node _ as node)) -> (node : 'a node)
@@ -83,23 +85,23 @@ let rec rev_skip_aux : type k. int -> ('a, k) elem -> 'a node = fun n ->
 let at index root =
   let Root (_, first) = root in
   if index < 0
-  then failwith "DLList.at: negative index"
+  then invalid_arg "DLList.at: negative index"
   else skip_aux index first
 
 let rev_at index root =
   let Root (last, _) = root in
   if index < 0
-  then failwith "DLList.rev_at: negative index"
+  then invalid_arg "DLList.rev_at: negative index"
   else rev_skip_aux index last
 
 let skip count node =
   if count < 0
-  then failwith "DLList.skip: negative count"
+  then invalid_arg "DLList.skip: negative count"
   else skip_aux count node
 
 let rev_skip count node =
   if count < 0
-  then failwith "DLList.rev_skip: negative count"
+  then invalid_arg "DLList.rev_skip: negative count"
   else rev_skip_aux count node
 
 let add_first root value =
