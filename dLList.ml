@@ -10,8 +10,12 @@ type 'a mutable_elem = {
   }
 
 let create () =
-  (* We can not allocate a Root right away because it might get optimized out as
-     a compile-time constant since it is not supposed to have mutable fields. *)
+  (* We can not allocate a Root directly like this:
+
+     let rec root = Root (root, root)
+
+     because it might get optimized out as a compile-time constant
+     since it is not supposed to have mutable fields. *)
   let rec root = { prev = root; next = root } in
   (Obj.magic root : 'a root)
 
@@ -31,13 +35,6 @@ let put_back (node : 'a node) =
   let node : 'a mutable_elem = Obj.magic node in
   node.prev.next <- node;
   node.next.prev <- node
-
-let remove_and_neuter (node : 'a node) =
-  let node : 'a mutable_elem = Obj.magic node in
-  node.prev.next <- node.next;
-  node.next.prev <- node.prev;
-  node.next <- node;
-  node.prev <- node
 
 let first = function
   | Root (_, (Node _ as node)) -> (node : 'a node)
@@ -71,29 +68,39 @@ let prev_opt = function
   | Node (Node _ as node, _, _) -> Some (node : 'a node)
   | Node (Root _, _, _) -> None
 
+let rec skip_aux : type k. int -> ('a, k) elem -> 'a node = fun n ->
+  function
+  | Root _ -> raise Not_found
+  | Node _ as node when n = 0 -> node
+  | Node (_, next, _) -> skip_aux (pred n) next
+
+let rec rev_skip_aux : type k. int -> ('a, k) elem -> 'a node = fun n ->
+  function
+  | Root _ -> raise Not_found
+  | Node _ as node when n = 0 -> node
+  | Node (prev, _, _) -> rev_skip_aux (pred n) prev
+
 let at index root =
-  let rec skip : type k. int -> ('a, k) elem -> 'a node = fun n ->
-    function
-    | Root _ -> raise Not_found
-    | Node _ as node when n = 0 -> node
-    | Node (_, next, _) -> skip (pred n) next
-  in
   let Root (_, first) = root in
   if index < 0
   then failwith "DLList.at: negative index"
-  else skip index first
+  else skip_aux index first
 
 let rev_at index root =
-  let rec skip : type k. int -> ('a, k) elem -> 'a node = fun n ->
-    function
-    | Root _ -> raise Not_found
-    | Node _ as node when n = 0 -> node
-    | Node (prev, _, _) -> skip (pred n) prev
-  in
   let Root (last, _) = root in
   if index < 0
   then failwith "DLList.rev_at: negative index"
-  else skip index last
+  else rev_skip_aux index last
+
+let skip count node =
+  if count < 0
+  then failwith "DLList.skip: negative count"
+  else skip_aux count node
+
+let rev_skip count node =
+  if count < 0
+  then failwith "DLList.rev_skip: negative count"
+  else rev_skip_aux count node
 
 let add_first root value =
   let Root (_, first) = root in

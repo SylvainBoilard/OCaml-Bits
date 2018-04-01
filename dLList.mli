@@ -12,6 +12,8 @@ val prev : 'a node -> 'a node
 val prev_opt : 'a node -> 'a node option
 val at : int -> 'a root -> 'a node
 val rev_at : int -> 'a root -> 'a node
+val skip : int -> 'a node -> 'a node
+val rev_skip : int -> 'a node -> 'a node
 val add_first : 'a root -> 'a -> unit
 val add_last : 'a root -> 'a -> unit
 val insert_after : 'a node -> 'a -> unit
@@ -22,7 +24,6 @@ val copy : 'a root -> 'a root
 val retrieve_root : 'a node -> 'a root
 val remove : 'a node -> unit
 val put_back : 'a node -> unit
-val remove_and_neuter : 'a node -> unit
 val get : 'a node -> 'a
 val iter : ('a -> unit) -> 'a root -> unit
 val rev_iter : ('a -> unit) -> 'a root -> unit
