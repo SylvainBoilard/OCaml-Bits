@@ -94,12 +94,12 @@ let rev_at index root =
   then invalid_arg "DLList.rev_at: negative index"
   else rev_skip_aux index last
 
-let skip count node =
+let skip count (node : 'a node) =
   if count < 0
   then invalid_arg "DLList.skip: negative count"
   else skip_aux count node
 
-let rev_skip count node =
+let rev_skip count (node : 'a node) =
   if count < 0
   then invalid_arg "DLList.rev_skip: negative count"
   else rev_skip_aux count node
