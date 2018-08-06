@@ -2,8 +2,8 @@
 
 let solve mm =
   let len = Array.length mm in
-  if len = 0 || Array.exists (fun a -> Array.length a <> len + 1) mm then
-    invalid_arg "incorrect matrix dimensions";
+  if len = 0 || Array.exists (fun a -> Array.length a <> len + 1) mm
+  then invalid_arg "Les.solve: incorrect matrix dimensions";
   let m = Array.map Array.copy mm in
   (* Gauss pivot *)
   (* Column per column: *)

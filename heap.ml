@@ -37,8 +37,8 @@ module Make (Ord: OrderedType) =
     let merge h1 h2 = match h1, h2 with
       | EmptyHeap, h | h, EmptyHeap -> h
       | Heap (e1, l1), Heap (e2, l2) ->
-         if Ord.compare e1 e2 < 0 then
-           Heap (e1, h2 :: l1)
+         if Ord.compare e1 e2 < 0
+         then Heap (e1, h2 :: l1)
          else Heap (e2, h1 :: l2)
 
     let meld l =

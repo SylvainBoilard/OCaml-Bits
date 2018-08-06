@@ -23,35 +23,31 @@ module Finger =
       finger.matrix.elements_by_row.(finger.index) <- value
 
     let next finger =
-      if finger.index = pred (Array.length finger.matrix.elements_by_row) then
-        raise Not_found
-      else
-        { finger with index = succ finger.index }
+      if finger.index = pred (Array.length finger.matrix.elements_by_row)
+      then raise Not_found
+      else { finger with index = succ finger.index }
 
     let previous finger =
-      if finger.index = 0 then
-        raise Not_found
-      else
-        { finger with index = pred finger.index }
+      if finger.index = 0
+      then raise Not_found
+      else { finger with index = pred finger.index }
 
     let next_on_row finger =
       let row_indexes = finger.matrix.row_indexes in
       let new_index = succ finger.index in
       try
-        if row_indexes.(finger.index) = row_indexes.(new_index) then
-          { finger with index = new_index }
-        else
-          raise Not_found
+        if row_indexes.(finger.index) = row_indexes.(new_index)
+        then { finger with index = new_index }
+        else raise Not_found
       with Invalid_argument _ -> raise Not_found
 
     let previous_on_row finger =
       let row_indexes = finger.matrix.row_indexes in
       let new_index = pred finger.index in
       try
-        if row_indexes.(finger.index) = row_indexes.(new_index) then
-          { finger with index = new_index }
-        else
-          raise Not_found
+        if row_indexes.(finger.index) = row_indexes.(new_index)
+        then { finger with index = new_index }
+        else raise Not_found
       with Invalid_argument _ -> raise Not_found
 
     let next_on_column finger =
@@ -59,10 +55,9 @@ module Finger =
       let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
       try
         let new_index = finger.matrix.by_column_to_row.(succ index_by_columns) in
-        if column_indexes.(finger.index) = column_indexes.(new_index) then
-          { finger with index = new_index }
-        else
-          raise Not_found
+        if column_indexes.(finger.index) = column_indexes.(new_index)
+        then { finger with index = new_index }
+        else raise Not_found
       with Invalid_argument _ -> raise Not_found
 
     let previous_on_column finger =
@@ -70,17 +65,16 @@ module Finger =
       let index_by_columns = finger.matrix.by_row_to_column.(finger.index) in
       try
         let new_index = finger.matrix.by_column_to_row.(pred index_by_columns) in
-        if column_indexes.(finger.index) = column_indexes.(new_index) then
-          { finger with index = new_index }
-        else
-          raise Not_found
+        if column_indexes.(finger.index) = column_indexes.(new_index)
+        then { finger with index = new_index }
+        else raise Not_found
       with Invalid_argument _ -> raise Not_found
 
     let compare f1 f2 =
-      if f1.matrix == f2.matrix then
-        f1.index - f2.index
-      else
-        invalid_arg "Finger.compare: fingers from different matrices"
+      if f1.matrix == f2.matrix
+      then f1.index - f2.index
+      else invalid_arg
+             "SparseMatrix.Finger.compare: fingers from different matrices"
   end
 
 let of_list indexed_elements =
@@ -90,17 +84,16 @@ let of_list indexed_elements =
 
       let yield l =
         let l = ref l in
-        let aux _ =
-          match !l with
-          | hd::tl -> l := tl; hd
-          | [] -> failwith "yield"
+        let aux _ = match !l with
+          | hd :: tl -> l := tl; hd
+          | [] -> failwith "List.yield"
         in
         aux
 
       let rev_mapi f l =
         let rec aux acc n = function
           | [] -> acc
-          | hd::tl -> aux (f n hd::acc) (succ n) tl
+          | hd :: tl -> aux (f n hd :: acc) (succ n) tl
         in
         aux [] 0 l
     end
@@ -114,10 +107,11 @@ let of_list indexed_elements =
   let element_count = ref 0 in
   let column_indexes, row_indexes, elements_by_row =
     List.fold_left (fun (cl, rl, el) ((c, r), e) ->
-        if c < 0 || r < 0 then invalid_arg "negative index";
+        if c < 0 || r < 0
+        then invalid_arg "SparseMatrix.of_list: negative index";
         max_row := max r !max_row;
         incr element_count;
-        c::cl, r::rl, e::el
+        c :: cl, r :: rl, e :: el
       ) ([], [], []) rev_sorted_by_row
   in
   let by_column_to_row =
@@ -149,8 +143,7 @@ let of_list indexed_elements =
   matrix
 
 let flatten_coords matrix (column, row) =
-  let rec loop start finish =
-    match (start + finish) / 2 with
+  let rec loop start finish = match (start + finish) / 2 with
     | _ when start = finish -> raise Not_found
     | i when matrix.column_indexes.(i) = column -> i
     | i when matrix.column_indexes.(i) > column -> loop start i
@@ -171,16 +164,14 @@ let finger matrix coords =
   { Finger.matrix; index = flatten_coords matrix coords }
 
 let first matrix =
-  if matrix.elements_by_row = [||] then
-    raise Not_found
-  else
-    { Finger.matrix; index = 0 }
+  if matrix.elements_by_row = [||]
+  then raise Not_found
+  else { Finger.matrix; index = 0 }
 
 let last matrix =
-  if matrix.elements_by_row = [||] then
-    raise Not_found
-  else
-    { Finger.matrix; index = pred (Array.length matrix.elements_by_row) }
+  if matrix.elements_by_row = [||]
+  then raise Not_found
+  else { Finger.matrix; index = pred (Array.length matrix.elements_by_row) }
 
 let iter f matrix = Array.iter f matrix.elements_by_row
 
