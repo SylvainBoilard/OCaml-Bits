@@ -10,5 +10,7 @@ type 'a t
 
 val make : int -> 'a -> 'a t
 val get : 'a t -> int * int -> 'a
+val (.%()) : 'a t -> int * int -> 'a
 val set : 'a t -> int * int -> 'a -> unit
+val (.%()<-) : 'a t -> int * int -> 'a -> unit
 val get_subarray : 'a t -> int -> 'a Subarray.t

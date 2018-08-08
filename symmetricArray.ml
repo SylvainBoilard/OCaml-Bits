@@ -41,10 +41,14 @@ let get a c =
   then invalid_arg "SymmetricArray.get: index out of bounds"
   else Array.unsafe_get a.data (i + j * (j + 1) / 2)
 
+let (.%()) a c = get a c
+
 let set a c e =
   let i, j = norm_coords c in
   if i < 0 || j >= a.length
   then invalid_arg "SymmetricArray.set: index out of bounds"
   else Array.unsafe_set a.data (i + j * (j + 1) / 2) e
+
+let (.%()<-) a c e = set a c e
 
 let get_subarray symarray index = Subarray.{ symarray; index }
